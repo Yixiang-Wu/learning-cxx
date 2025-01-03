@@ -30,44 +30,45 @@ struct Tensor4D {
     // `others` 长度为 1 但 `this` 长度不为 1 的维度将发生广播计算。
     // 例如，`this` 形状为 `[1, 2, 3, 4]`，`others` 形状为 `[1, 2, 1, 4]`，
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
-    Tensor4D &operator+=(Tensor4D const &others) {
-    // 检查形状兼容性
+       Tensor4D &operator+=(Tensor4D const &others) {
+        // 检查形状兼容性
         for (auto i = 0u; i < 4; ++i) {
-            if (shape[i] != others.shape[i]) {
-                ASSERT(others.shape[i] == 1, "Broadcasting is only allowed when the dimension of `others` is 1.");
+            if (shape[i] != others.shape[i] && others.shape[i] != 1) {
+                ASSERT(false, "Broadcasting is only allowed when the dimension of `others` is 1.");
             }
         }
 
-        // 计算总元素数
+        // 遍历并进行加法
+        unsigned int indices[4] = {};
+        unsigned int others_indices[4] = {};
         unsigned int size = 1;
         for (auto i = 0u; i < 4; ++i) {
             size *= shape[i];
         }
 
-        // 实现单向广播的加法
-        for (auto i = 0u; i < size; ++i) {
-            // 计算当前元素在 `this` 中的多维索引
-            unsigned int idx = i;
-            unsigned int indices[4];
-            for (auto j = 0u; j < 4; ++j) {
-                indices[j] = idx % shape[j];
-                idx /= shape[j];
+        for (unsigned int index = 0; index < size; ++index) {
+            unsigned int temp = index;
+            for (int i = 3; i >= 0; --i) {
+                indices[i] = temp % shape[i];
+                others_indices[i] = others.shape[i] == 1 ? 0 : indices[i];
+                temp /= shape[i];
             }
 
-            // 计算 `others` 中对应的索引
-            unsigned int other_idx = 0;
-            unsigned int stride = 1;
-            for (auto j = 0u; j < 4; ++j) {
-                other_idx += (indices[j] % others.shape[j]) * stride;
-                stride *= others.shape[j];
-            }
+            unsigned int this_flat_index = indices[0] * (shape[1] * shape[2] * shape[3]) +
+                                           indices[1] * (shape[2] * shape[3]) +
+                                           indices[2] * (shape[3]) +
+                                           indices[3];
 
-            // 执行加法操作
-            data[i] += others.data[other_idx];
+            unsigned int others_flat_index = others_indices[0] * (others.shape[1] * others.shape[2] * others.shape[3]) +
+                                             others_indices[1] * (others.shape[2] * others.shape[3]) +
+                                             others_indices[2] * (others.shape[3]) +
+                                             others_indices[3];
+
+            data[this_flat_index] += others.data[others_flat_index];
         }
 
         return *this;
-}
+    }
 };
 
 // ---- 不要修改以下代码 ----
