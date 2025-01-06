@@ -1,14 +1,28 @@
 #include "../exercise.h"
 
-constexpr unsigned long long fibonacci(int i) {
-    switch (i) {
-        case 0:
-            return 0;
-        case 1:
-            return 1;
-        default:
-            return fibonacci(i - 1) + fibonacci(i - 2);
+// constexpr unsigned long long fibonacci(int i) {
+//     switch (i) {
+//         case 0:
+//             return 0;
+//         case 1:
+//             return 1;
+//         default:
+//             return fibonacci(i - 1) + fibonacci(i - 2);
+//     }
+// }
+constexpr unsigned long long fibonacci(int n) {
+    if (n == 0) return 0;
+    if (n == 1) return 1;
+
+    unsigned long long a = 0;
+    unsigned long long b = 1;
+    unsigned long long c = 0;
+    for (int i = 2; i <= n; ++i) {
+        c = a + b;
+        a = b;
+        b = c;
     }
+    return c;
 }
 
 int main(int argc, char **argv) {
@@ -24,3 +38,4 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
